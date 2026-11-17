@@ -3,7 +3,6 @@ package Minimarket.GlobalExpress_SpringBoot.config;
 import Minimarket.GlobalExpress_SpringBoot.repository.UsuarioRepository;
 import Minimarket.GlobalExpress_SpringBoot.security.SesionService;
 import Minimarket.GlobalExpress_SpringBoot.security.TokenAuthFilter;
-import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,44 +19,27 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/**
- * Seguridad por roles y CORS (el React llama desde las direcciones de app.cors.origins).
- *
- * Quién puede qué (coincide con utils/permisos.js del React):
- *  - Login:                         público
- *  - Productos: consultar (GET):    Administrador y Cajero
- *  - Productos: crear/editar/borrar: solo Administrador
- *  - Ventas (historial, registrar, cancelar): Administrador y Cajero
- *  - Ventas: eliminar de forma permanente (DELETE): solo Administrador
- *  - Usuarios:                       solo Administrador (salvo cerrar sesión)
- *  - Reportes:                       solo Administrador
- *
- * Sin token válido responde 401; con token pero sin permiso, 403.
- */
+/* Deja /api/usuarios/login como publico y protege el resto.
+ * Seguridad por roles y CORS 
+ * Sin token valido responde error 401, con token pero sin permiso error 403. */
 @Configuration
 public class SecurityConfig {
 
     private final SesionService sesionService;
     private final UsuarioRepository usuarioRepository;
-    private final List<String> origenesPermitidos;
 
-    public SecurityConfig(SesionService sesionService,
-                          UsuarioRepository usuarioRepository,
-                          @Value("${app.cors.origins}") String origenes) {
+    @Value("${app.cors.allowed-origins:http://localhost:3000}")
+    private List<String> allowedOrigins;
+
+    public SecurityConfig(SesionService sesionService, UsuarioRepository usuarioRepository) {
         this.sesionService = sesionService;
         this.usuarioRepository = usuarioRepository;
-        // Varias direcciones se separan con coma: https://mi-app.netlify.app,http://localhost:3000
-        this.origenesPermitidos = Arrays.stream(origenes.split(","))
-                .map(String::trim)
-                .filter(o -> !o.isEmpty())
-                .toList();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
-                // Sin cookies ni sesión del servidor: la identidad va en el token, por eso no hace falta CSRF
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
@@ -82,7 +64,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(origenesPermitidos);
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
 
