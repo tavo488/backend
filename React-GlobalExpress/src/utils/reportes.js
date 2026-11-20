@@ -337,7 +337,7 @@ export function generarReporte(idIndicador, ventasPeriodo, todasLasVentas, desde
         textoComparable = moneda(comparable);
       }
 
-      const nombre = etiquetas(ym);
+      const nombre = parcial ? `${etiquetas(ym)} *` : etiquetaMes(ym);
       const fila = [nombre, moneda(actual), moneda(anteriorCompleto)];
       if (hayMesParcial) fila.push(textoComparable);
 
