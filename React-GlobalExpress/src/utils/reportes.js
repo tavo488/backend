@@ -107,16 +107,7 @@ const diasDelMes = (ym) => {
 
 const dosDigitos = (n) => String(n).padStart(2, '0');
 
-// Días del mes que entran en el período: [primer día, último día] como número de día
-const ventanaDelMes = (ym, desde, hasta) => {
-  const primero = desde > `${ym}-01` ? Number(desde.slice(8, 10)) : 1;
-  const ultimoMes = diasDelMes(ym);
-  const ultimo = hasta < `${ym}-${dosDigitos(ultimoMes)}` ? Number(hasta.slice(8, 10)) : ultimoMes;
-  return [primero, ultimo];
-};
-
 // Filtros y totales 
-
 export const filtrarPorPeriodo = (ventas, desde, hasta) =>
   ventas.filter((v) => {
     const dia = v.fecha.slice(0, 10);
@@ -337,7 +328,7 @@ export function generarReporte(idIndicador, ventasPeriodo, todasLasVentas, desde
         textoComparable = moneda(comparable);
       }
 
-      const nombre = parcial ? `${etiquetas(ym)} *` : etiquetaMes(ym);
+      const nombre = parcial ? etiqueta(ym) : etiquetaMes(ym);
       const fila = [nombre, moneda(actual), moneda(anteriorCompleto)];
       if (hayMesParcial) fila.push(textoComparable);
 
