@@ -21,7 +21,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/* Seguridad por roles y CORS (el React llama desde las direcciones de app.cors.origins) */
+/** Seguridad por roles y CORS (el React llama desde las direcciones de app.cors.origins). */
 @Configuration
 public class SecurityConfig {
 
@@ -32,11 +32,12 @@ public class SecurityConfig {
 
     public SecurityConfig(SesionService sesionService,
                             UsuarioRepository usuarioRepository,
-                            @Value("${app.cors.origins}") String origenes,
-                            @Value("${app.monitor.token:}") String monitorToken) {
+                            @Value("${app.cors.allowed-origins:${app.cors.origins:${CORS_ORIGINS:http://localhost:3000}}}") String origenes,
+                            @Value("${app.monitor.token:${MONITOR_TOKEN:}}") String monitorToken) {
         this.monitorToken = monitorToken;
         this.sesionService = sesionService;
         this.usuarioRepository = usuarioRepository;
+        // Varias direcciones se separan con coma: https://mi-app.netlify.app,http://localhost:3000
         this.origenesPermitidos = Arrays.stream(origenes.split(","))
                 .map(String::trim)
                 .filter(o -> !o.isEmpty())
@@ -55,7 +56,8 @@ public class SecurityConfig {
                         new TokenAuthFilter(sesionService, usuarioRepository),
                         UsernamePasswordAuthenticationFilter.class)
                 // Monitoreo: /actuator/** solo con la clave MONITOR_TOKEN (la usa Grafana)
-                .addFilterBefore(new MonitorTokenFilter(monitorToken),
+                .addFilterBefore(
+                        new MonitorTokenFilter(monitorToken),
                         UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
