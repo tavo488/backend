@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/productos/**").hasRole("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.DELETE, "/api/ventas/**").hasRole("ADMINISTRADOR")
                         .requestMatchers("/api/ventas/**").authenticated()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated());
         return http.build();
     }
